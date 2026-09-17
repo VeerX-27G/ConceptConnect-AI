@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ConceptConnect AI</title>
+
+<!-- Set theme class before paint to avoid flash -->
+<script>
+  const savedTheme = localStorage.getItem("cc-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+    document.documentElement.classList.add("dark");
+  }
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        fontFamily: {
+          heading: ["Space Grotesk", "sans-serif"],
+          sans: ["IBM Plex Sans", "sans-serif"],
+          mono: ["IBM Plex Mono", "monospace"],
+        },
+        colors: {
+          brandblue: "#2F6BFF",
+          brandindigo: "#5B4FE8",
+          brandviolet: "#8B3DFF",
+        },
+      },
+    },
+  };
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="font-sans bg-[#F5F6FB] dark:bg-[#0F0D1A] text-[#1B1730] dark:text-[#EDEBFA] transition-colors">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-72 shrink-0 bg-[#EEF0FA] dark:bg-[#14111F] border-r border-[#DEE1F2] dark:border-[#2A2540] px-4.5 py-6 flex flex-col">
+
+    <div class="flex items-center gap-2.5 mb-6 px-1">
+      <span class="w-6.5 h-6.5 rounded-lg bg-gradient-to-br from-brandblue via-brandindigo to-brandviolet"></span>
+      <span class="font-heading font-semibold text-[15px]">ConceptConnect</span>
+    </div>
+
+    <button id="newQuizBtn"
+      class="flex items-center gap-2 w-full px-3.5 py-2.5 rounded-xl border border-[#DEE1F2] dark:border-[#2A2540] bg-white dark:bg-[#17142B] hover:border-brandindigo transition-colors text-sm font-medium">
+      <span class="text-brandindigo font-heading text-base leading-none">+</span> New quiz
+    </button>
+
+    <div class="mt-6 flex-1 flex flex-col min-h-0">
+      <p class="text-xs font-mono uppercase tracking-wide text-[#6B6765] dark:text-[#8B87A8] mb-2.5 px-1">History</p>
+
+      <ul id="historyList" class="flex flex-col gap-1.5 overflow-y-auto"></ul>
+
+      <p id="historyEmpty" class="text-[13px] text-[#6B6765] dark:text-[#8B87A8] px-1 py-2">
+        No quizzes yet. Start one to see it here.
+      </p>
+    </div>
+
+    <div class="pt-4 mt-3 border-t border-[#DEE1F2] dark:border-[#2A2540]">
+      <div class="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white dark:bg-[#17142B] border border-[#DEE1F2] dark:border-[#2A2540]">
+        <span class="w-2 h-2 rounded-full bg-gradient-to-br from-brandblue via-brandindigo to-brandviolet shrink-0"></span>
+        <span class="text-[11.5px] font-mono text-[#6B6765] dark:text-[#8B87A8] leading-tight">
+          Powered by
+          <span class="block text-[12.5px] font-medium bg-gradient-to-r from-brandblue via-brandindigo to-brandviolet bg-clip-text text-transparent">
+            OpenAI's GPT 6 Astra
+          </span>
+        </span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="flex items-center justify-between px-8 py-5 border-b border-[#DEE1F2] dark:border-[#2A2540] shrink-0">
+      <h1 id="viewTitle" class="font-heading font-semibold text-lg">New quiz</h1>
+
+      <button id="themeToggle" aria-label="Toggle dark mode"
+        class="w-9.5 h-9.5 rounded-lg border border-[#DEE1F2] dark:border-[#2A2540] bg-white dark:bg-[#17142B] flex items-center justify-center">
+        <svg class="w-4.5 h-4.5 block dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+        <svg class="w-4.5 h-4.5 hidden dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <section id="content" class="flex-1 overflow-y-auto px-8 py-10 flex justify-center">
+
+      <!-- Intake panel -->
+      <div id="intakePanel" class="w-full max-w-2xl">
+        <p class="text-[15px] text-[#6B6765] dark:text-[#8B87A8] leading-relaxed mb-5">
+          Paste your notes, or drop in a file — I'll pull out the key ideas and quiz you on them.
+        </p>
+
+        <textarea id="notesInput" placeholder="Paste lecture notes or a textbook snippet here..."
+          class="w-full min-h-[160px] p-4 rounded-2xl border border-[#DEE1F2] dark:border-[#2A2540] bg-white dark:bg-[#17142B] text-sm leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-brandindigo"></textarea>
+
+        <div id="dropzone"
+          class="mt-4 p-6 border-2 border-dashed border-[#DEE1F2] dark:border-[#2A2540] rounded-2xl text-center cursor-pointer hover:border-brandindigo transition-colors">
+          <input type="file" id="fileInput" accept=".pdf,.docx,.pptx,.txt" hidden />
+          <p class="text-sm"><strong class="font-semibold">Click to attach</strong> or drag a file here</p>
+          <p class="text-xs text-[#6B6765] dark:text-[#8B87A8] mt-1">PDF, DOCX, PPTX or TXT</p>
+          <p id="fileChosen" class="text-brandindigo font-medium text-[13px] font-mono mt-2"></p>
+        </div>
+
+        <button id="generateBtn"
+          class="mt-5 w-full py-3.5 rounded-2xl bg-gradient-to-br from-brandblue via-brandindigo to-brandviolet text-white font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+          Generate quiz
+        </button>
+      </div>
+
+      <!-- Quiz panel -->
+      <div id="quizPanel" class="w-full max-w-2xl hidden">
+        <div class="h-1.5 rounded-full bg-[#DEE1F2] dark:bg-[#2A2540] overflow-hidden">
+          <div id="progressFill" class="h-full bg-gradient-to-r from-brandblue via-brandindigo to-brandviolet transition-all duration-300" style="width:0%"></div>
+        </div>
+        <p id="progressLabel" class="text-xs font-mono text-[#6B6765] dark:text-[#8B87A8] mt-2.5 mb-6">Question 1 of 8</p>
+
+        <h2 id="questionText" class="font-heading text-xl font-semibold leading-relaxed mb-5"></h2>
+
+        <div id="optionsList" class="flex flex-col gap-2.5"></div>
+
+        <div id="explanationBox" class="hidden mt-5 p-4 rounded-2xl bg-[#EEF0FA] dark:bg-[#14111F]">
+          <p id="explanationVerdict" class="font-semibold mb-1.5"></p>
+          <p id="explanationText" class="text-sm text-[#6B6765] dark:text-[#8B87A8] leading-relaxed"></p>
+        </div>
+
+        <button id="nextBtn"
+          class="hidden mt-5 w-full py-3.5 rounded-2xl bg-gradient-to-br from-brandblue via-brandindigo to-brandviolet text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+          Next question
+        </button>
+      </div>
+
+      <!-- Score panel -->
+      <div id="scorePanel" class="w-full max-w-2xl hidden text-center pt-10">
+        <p class="text-sm text-[#6B6765] dark:text-[#8B87A8] mb-1">Quiz complete</p>
+        <p id="scoreNumber" class="font-mono text-5xl font-semibold bg-gradient-to-br from-brandblue via-brandindigo to-brandviolet bg-clip-text text-transparent">0/0</p>
+        <p id="scoreSub" class="text-sm text-[#6B6765] dark:text-[#8B87A8] mt-3"></p>
+        <button id="restartBtn"
+          class="mt-6 w-full py-3.5 rounded-2xl bg-gradient-to-br from-brandblue via-brandindigo to-brandviolet text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+          Start a new quiz
+        </button>
+      </div>
+
+      <!-- Past quiz transcript (chat-style, read-only) -->
+      <div id="transcriptPanel" class="w-full max-w-2xl hidden">
+        <div class="flex items-center justify-between mb-1">
+          <p class="font-mono text-xs text-[#6B6765] dark:text-[#8B87A8]" id="transcriptMeta"></p>
+        </div>
+        <div id="transcriptList" class="flex flex-col gap-4 pb-4"></div>
+      </div>
+
+    </section>
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
