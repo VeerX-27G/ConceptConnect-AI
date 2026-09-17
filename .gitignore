@@ -4,4 +4,4 @@
 __pycache__/
 *.pyo
 *.pyd
-quiz_history.db
+*.db
