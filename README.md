@@ -32,8 +32,7 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 | Backend   | FastAPI (Python)                       |
 | AI        | OpenAI API                             |
 | Storage   | SQLite (single local file, no server)  |
-| Frontend  | Plain HTML, Tailwind CSS (CDN),        |
-            vanilla JS — no framework, no build step |
+| Frontend  | Plain HTML, Tailwind CSS (CDN), vanilla JS — no framework, no build step |
 
 ---
 
