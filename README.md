@@ -32,8 +32,7 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 | Backend   | FastAPI (Python)                       |
 | AI        | OpenAI API                             |
 | Storage   | SQLite (single local file, no server)  |
-| Frontend  | Plain HTML, Tailwind CSS (CDN),        |
-            vanilla JS — no framework, no build step |
+| Frontend  | Plain HTML, Tailwind CSS (CDN), vanilla JS — no framework, no build step |
 
 ---
 
@@ -112,5 +111,3 @@ To stop the server, close the terminal window (or press `Ctrl+C`).
   for deployment or multi-user access (CORS is left open and there's no
   authentication, both of which are fine for `localhost` but not for a
   public server).
-- Make sure the model name in your `.env` is a real, valid model available
-  to your OpenAI account, or quiz generation will fail.
