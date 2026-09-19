@@ -14,7 +14,7 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 
 ## Features
 
-- **Paste notes or upload a file** — supports `.pdf`, `.docx`, `.pptx`, `.jpj/.jepj/.png` and `.txt`
+- **Paste notes or upload a file** — supports `.pdf`, `.docx`, `.pptx`, `.jpg/.jpej/.png` and `.txt`
 - **AI-generated quiz** — 1-N multiple-choice questions with an explanation for every answer. N is total number of questions depending on the content length.
 - **One question at a time** — see whether you got it right immediately, with the correct answer highlighted
 - **Quiz history** — every completed quiz is saved locally (SQLite) and listed in the sidebar
