@@ -41,6 +41,7 @@ def generate_quiz(content: str) -> dict:
     )
 
     raw = response.output_text.strip()
+    # Remove any markdown formatting that might be present in the response
     raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
     return json.loads(raw)

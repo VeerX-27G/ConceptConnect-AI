@@ -60,7 +60,8 @@ els.themeToggle.addEventListener("click", () => {
 async function fetchHistory() {
   try {
     const res = await fetch("/api/history");
-    if (!res.ok) throw new Error("Failed to load history");
+    if (!res.ok) 
+      throw new Error("Failed to load history");
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -70,7 +71,8 @@ async function fetchHistory() {
 
 async function fetchSession(id) {
   const res = await fetch(`/api/history/${id}`);
-  if (!res.ok) throw new Error("Failed to load that quiz");
+  if (!res.ok) 
+    throw new Error("Failed to load that quiz");
   return await res.json();
 }
 
@@ -151,9 +153,11 @@ async function renderHistory() {
       e.stopPropagation();
       const current = renameBtn.getAttribute("data-rename-title");
       const next = prompt("Rename this quiz:", current);
-      if (next === null) return; // cancelled
+      if (next === null) 
+        return; // cancelled
       const trimmed = next.trim();
-      if (!trimmed || trimmed === current) return;
+      if (!trimmed || trimmed === current) 
+        return;
 
       try {
         await renameSessionApi(item.id, trimmed);
@@ -258,9 +262,11 @@ async function viewSession(id) {
 }
 
 function renderTranscript(session) {
+  // Transcript is read-only, so we don't need to keep it in state or sessionStorage.
   els.transcriptMeta.textContent = `${session.title} · ${session.score}/${session.total} · ${session.date}`;
   els.transcriptList.innerHTML = "";
 
+  // Render each question, the user's answer, and the explanation.
   session.questions.forEach((q, i) => {
     const userIndex = session.answers[i];
     const isCorrect = userIndex === q.correct_index;
@@ -268,14 +274,17 @@ function renderTranscript(session) {
 
     const wrapper = document.createElement("div");
     wrapper.className = "flex flex-col gap-3";
+    // '$' means "escape" in template literals, so we have to use double $$ to get a literal $ in the output.
     wrapper.innerHTML = `
       <div class="${BOT_BUBBLE}">
         <p class="font-heading font-semibold mb-2">Q${i + 1}. ${q.question}</p>
         <ul class="space-y-1">
           ${q.options
+            // Mark the correct answer in green, and the others in gray. The user's answer is shown below in a separate bubble.
             .map((opt, oi) => {
               let cls = "text-[#6B6765] dark:text-[#8B87A8]";
-              if (oi === q.correct_index) cls = "text-emerald-600 dark:text-emerald-400 font-medium";
+              if (oi === q.correct_index) 
+                cls = "text-emerald-600 dark:text-emerald-400 font-medium";
               return `<li class="${cls}">${opt}</li>`;
             })
             .join("")}
@@ -327,8 +336,10 @@ function handleFile(file) {
 /* ---------------- Quiz generation (real call to the FastAPI backend) ---------------- */
 async function generateQuiz(content, file) {
   const formData = new FormData();
-  if (file) formData.append("file", file);
-  if (content) formData.append("content", content);
+  if (file) 
+    formData.append("file", file);
+  if (content) 
+    formData.append("content", content);
 
   const res = await fetch("/api/quiz", { method: "POST", body: formData });
 
@@ -387,6 +398,7 @@ function renderQuestion() {
   els.explanationBox.classList.add("hidden");
   els.nextBtn.classList.add("hidden");
 
+  // Render the options for this question. Move to next question when the user clicks one, and show the explanation.
   q.options.forEach((opt, i) => {
     const div = document.createElement("div");
     div.className = OPTION_BASE_CLASSES;
@@ -435,12 +447,14 @@ function applyAnsweredVisuals(index) {
 }
 
 function selectAnswer(index) {
-  if (state.answered) return;
+  if (state.answered) 
+    return;
   state.answered = true;
   state.answers[state.currentIndex] = index;
 
   const q = state.quiz.questions[state.currentIndex];
-  if (index === q.correct_index) state.score += 1;
+  if (index === q.correct_index) 
+    state.score += 1;
 
   applyAnsweredVisuals(index);
   saveActiveState("quiz");
