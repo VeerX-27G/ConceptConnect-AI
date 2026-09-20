@@ -15,7 +15,7 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 ## Features
 
 - **Paste notes or upload a file** — supports `.pdf`, `.docx`, `.pptx`, `.jpg/.jpej/.png` and `.txt`
-- **AI-generated quiz** — 1-N multiple-choice questions with an explanation for every answer. N is total number of questions depending on the content length.
+- **AI-generated quiz** — 1-to-N multiple-choice questions with an explanation for every answer. N is total number of questions depending on the content length.
 - **One question at a time** — see whether you got it right immediately, with the correct answer highlighted
 - **Quiz history** — every completed quiz is saved locally (SQLite) and listed in the sidebar
 - **Revisit past quizzes** — click any history entry to see a chat-style transcript of your questions, answers, and explanations
@@ -32,7 +32,7 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 | Backend   | FastAPI (Python)                       |
 | AI        | OpenAI API                             |
 | Storage   | SQLite (single local file, no server)  |
-| Frontend  | Plain HTML, Tailwind CSS (CDN), vanilla JS — no framework, no build step |
+| Frontend  | HTML5, Tailwind CSS (CDN), Vanilla JS — no framework, no build step |
 
 ---
 
@@ -105,11 +105,9 @@ To stop the server, close the terminal window (or press `Ctrl+C`).
 
 ---
 
-## Notes
+## Note
 
-- This project is currently intended for personal, local use only — it is not set up
+This project is currently intended for personal, local use only — it is not set up
   for deployment or multi-user access (CORS is left open and there's no
   authentication, both of which are fine for `localhost` but not for a
   public server).
-- Make sure the model name in your `.env` is a real, valid model available
-  to your OpenAI account, or quiz generation will fail.
