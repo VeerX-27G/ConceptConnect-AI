@@ -87,6 +87,8 @@ uvicorn main:app --reload
 
 Then open **http://127.0.0.1:8000** in your browser.
 
+![Screenshot 2026-09-25 104545.png](../../Pictures/Screenshots/Screenshot%202026-09-25%20104545.png)
+
 To stop the server, close the terminal window (or press `Ctrl+C`).
 
 ---
@@ -102,7 +104,6 @@ To stop the server, close the terminal window (or press `Ctrl+C`).
 - **In-progress quizzes** are temporarily kept in your browser's
   `sessionStorage` so a page refresh doesn't lose your progress — this
   clears automatically when you close the tab.
-
 ---
 
 ## Notes
