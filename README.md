@@ -87,6 +87,8 @@ uvicorn main:app --reload
 
 Then open **http://127.0.0.1:8000** in your browser.
 
+![![Screenshot 2026-09-25 104545.png](../../Pictures/Screenshots/Screenshot%202026-09-25%20104545.png)](img.png)
+
 To stop the server, close the terminal window (or press `Ctrl+C`).
 
 ---
@@ -107,9 +109,7 @@ To stop the server, close the terminal window (or press `Ctrl+C`).
 
 ## Notes
 
-- This project is currently intended for personal, local use only — it is not set up
+This project is currently intended for personal, local use only — it is not set up
   for deployment or multi-user access (CORS is left open and there's no
   authentication, both of which are fine for `localhost` but not for a
   public server).
-- Make sure the model name in your `.env` is a real, valid model available
-  to your OpenAI account, or quiz generation will fail.
