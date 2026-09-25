@@ -32,7 +32,8 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 | Backend   | FastAPI (Python)                       |
 | AI        | OpenAI API                             |
 | Storage   | SQLite (single local file, no server)  |
-| Frontend  | Plain HTML, Tailwind CSS (CDN), vanilla JS — no framework, no build step |
+| Frontend  | Plain HTML, Tailwind CSS (CDN),        |
+            vanilla JS — no framework, no build step |
 
 ---
 
@@ -87,8 +88,6 @@ uvicorn main:app --reload
 
 Then open **http://127.0.0.1:8000** in your browser.
 
-![Screenshot 2026-09-25 104545.png](../../Pictures/Screenshots/Screenshot%202026-09-25%20104545.png)
-
 To stop the server, close the terminal window (or press `Ctrl+C`).
 
 ---
@@ -104,6 +103,7 @@ To stop the server, close the terminal window (or press `Ctrl+C`).
 - **In-progress quizzes** are temporarily kept in your browser's
   `sessionStorage` so a page refresh doesn't lose your progress — this
   clears automatically when you close the tab.
+
 ---
 
 ## Notes
@@ -112,3 +112,5 @@ To stop the server, close the terminal window (or press `Ctrl+C`).
   for deployment or multi-user access (CORS is left open and there's no
   authentication, both of which are fine for `localhost` but not for a
   public server).
+- Make sure the model name in your `.env` is a real, valid model available
+  to your OpenAI account, or quiz generation will fail.
