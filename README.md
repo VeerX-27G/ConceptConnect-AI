@@ -21,7 +21,6 @@ Model used: [GPT 6 Astra](https://openai.com/index/gpt-6-astra/)
 - **Revisit past quizzes** — click any history entry to see a chat-style transcript of your questions, answers, and explanations
 - **Rename or delete** past quizzes from the sidebar
 - **Refresh-safe** — reloading the page mid-quiz won't lose your progress (closing the tab does, by design)
-- **Light / dark mode** toggle
 
 ---
 
