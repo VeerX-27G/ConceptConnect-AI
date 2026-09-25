@@ -5,6 +5,11 @@
 
 const html = document.documentElement;
 
+// When the page is served by uvicorn, same-origin "/api/..." works. If it's opened
+// any other way (PyCharm's built-in preview on :63342, file://, Live Server...),
+// relative calls hit the wrong server — so point them at the backend explicitly.
+const API_BASE = window.location.port === "8000" ? "" : "http://127.0.0.1:8000";
+
 const els = {
   themeToggle: document.getElementById("themeToggle"),
   newQuizBtn: document.getElementById("newQuizBtn"),
@@ -59,7 +64,7 @@ els.themeToggle.addEventListener("click", () => {
 /* ---------------- History (backed by SQLite via the FastAPI /api/history endpoints) ---------------- */
 async function fetchHistory() {
   try {
-    const res = await fetch("/api/history");
+    const res = await fetch(`${API_BASE}/api/history`);
     if (!res.ok) 
       throw new Error("Failed to load history");
     return await res.json();
@@ -70,18 +75,18 @@ async function fetchHistory() {
 }
 
 async function fetchSession(id) {
-  const res = await fetch(`/api/history/${id}`);
+  const res = await fetch(`${API_BASE}/api/history/${id}`);
   if (!res.ok) 
     throw new Error("Failed to load that quiz");
   return await res.json();
 }
 
 async function deleteSessionApi(id) {
-  await fetch(`/api/history/${id}`, { method: "DELETE" });
+  await fetch(`${API_BASE}/api/history/${id}`, { method: "DELETE" });
 }
 
 async function renameSessionApi(id, title) {
-  const res = await fetch(`/api/history/${id}`, {
+  const res = await fetch(`${API_BASE}/api/history/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title }),
@@ -94,7 +99,7 @@ async function renameSessionApi(id, title) {
 
 async function saveToHistory(entry) {
   try {
-    const res = await fetch("/api/history", {
+    const res = await fetch(`${API_BASE}/api/history`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(entry),
@@ -341,7 +346,7 @@ async function generateQuiz(content, file) {
   if (content) 
     formData.append("content", content);
 
-  const res = await fetch("/api/quiz", { method: "POST", body: formData });
+  const res = await fetch(`${API_BASE}/api/quiz`, { method: "POST", body: formData });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
