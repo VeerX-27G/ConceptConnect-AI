@@ -5,11 +5,6 @@
 
 const html = document.documentElement;
 
-// When the page is served by uvicorn, same-origin "/api/..." works. If it's opened
-// any other way (PyCharm's built-in preview on :63342, file://, Live Server...),
-// relative calls hit the wrong server — so point them at the backend explicitly.
-const API_BASE = window.location.port === "8000" ? "" : "http://127.0.0.1:8000";
-
 const els = {
   themeToggle: document.getElementById("themeToggle"),
   newQuizBtn: document.getElementById("newQuizBtn"),
@@ -51,6 +46,7 @@ let state = {
   answered: false,
   selectedFile: null,
   answers: [],
+  historyId: null,
 };
 
 /* ---------------- Theme ---------------- */
@@ -64,9 +60,8 @@ els.themeToggle.addEventListener("click", () => {
 /* ---------------- History (backed by SQLite via the FastAPI /api/history endpoints) ---------------- */
 async function fetchHistory() {
   try {
-    const res = await fetch(`${API_BASE}/api/history`);
-    if (!res.ok) 
-      throw new Error("Failed to load history");
+    const res = await fetch("/api/history");
+    if (!res.ok) throw new Error("Failed to load history");
     return await res.json();
   } catch (err) {
     console.error(err);
@@ -75,18 +70,17 @@ async function fetchHistory() {
 }
 
 async function fetchSession(id) {
-  const res = await fetch(`${API_BASE}/api/history/${id}`);
-  if (!res.ok) 
-    throw new Error("Failed to load that quiz");
+  const res = await fetch(`/api/history/${id}`);
+  if (!res.ok) throw new Error("Failed to load that quiz");
   return await res.json();
 }
 
 async function deleteSessionApi(id) {
-  await fetch(`${API_BASE}/api/history/${id}`, { method: "DELETE" });
+  await fetch(`/api/history/${id}`, { method: "DELETE" });
 }
 
 async function renameSessionApi(id, title) {
-  const res = await fetch(`${API_BASE}/api/history/${id}`, {
+  const res = await fetch(`/api/history/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title }),
@@ -97,21 +91,33 @@ async function renameSessionApi(id, title) {
   }
 }
 
-async function saveToHistory(entry) {
+async function startHistorySession(title, total, questions) {
+  const res = await fetch("/api/history", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, total, questions }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to start history session");
+  }
+  const { id } = await res.json();
+  return id;
+}
+
+async function updateHistorySession(completed) {
+  if (!state.historyId) return; // session was never created (e.g. request failed) — nothing to update
   try {
-    const res = await fetch(`${API_BASE}/api/history`, {
-      method: "POST",
+    const res = await fetch(`/api/history/${state.historyId}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(entry),
+      body: JSON.stringify({ score: state.score, answers: state.answers, completed }),
     });
     if (!res.ok) {
-      const body = await res.text();
-      console.error("Saving quiz to history failed:", res.status, body);
-      alert("Couldn't save this quiz to history — check the console for details.");
+      console.error("Updating history failed:", res.status, await res.text());
     }
   } catch (err) {
-    console.error("Couldn't save quiz to history:", err);
-    alert("Couldn't reach the server to save this quiz to history.");
+    console.error("Couldn't reach the server to update history:", err);
   }
   renderHistory();
 }
@@ -133,7 +139,10 @@ async function renderHistory() {
     li.innerHTML = `
       <div class="min-w-0">
         <div class="text-[13.5px] font-medium truncate">${item.title}</div>
-        <div class="text-xs font-mono text-[#6B6765] dark:text-[#8B87A8] mt-0.5">${item.score}/${item.total} · ${item.date}</div>
+        <div class="text-xs font-mono text-[#6B6765] dark:text-[#8B87A8] mt-0.5">
+          ${item.score}/${item.total} · ${item.date}
+          ${item.completed ? "" : '<span class="ml-1 text-brandindigo">· In progress</span>'}
+        </div>
       </div>
       <div class="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100">
         <button data-rename-id="${item.id}" data-rename-title="${item.title.replace(/"/g, "&quot;")}" aria-label="Rename quiz"
@@ -158,11 +167,9 @@ async function renderHistory() {
       e.stopPropagation();
       const current = renameBtn.getAttribute("data-rename-title");
       const next = prompt("Rename this quiz:", current);
-      if (next === null) 
-        return; // cancelled
+      if (next === null) return; // cancelled
       const trimmed = next.trim();
-      if (!trimmed || trimmed === current) 
-        return;
+      if (!trimmed || trimmed === current) return;
 
       try {
         await renameSessionApi(item.id, trimmed);
@@ -199,6 +206,7 @@ function saveActiveState(phase) {
       currentIndex: state.currentIndex,
       score: state.score,
       answers: state.answers,
+      historyId: state.historyId,
     })
   );
 }
@@ -267,11 +275,9 @@ async function viewSession(id) {
 }
 
 function renderTranscript(session) {
-  // Transcript is read-only, so we don't need to keep it in state or sessionStorage.
   els.transcriptMeta.textContent = `${session.title} · ${session.score}/${session.total} · ${session.date}`;
   els.transcriptList.innerHTML = "";
 
-  // Render each question, the user's answer, and the explanation.
   session.questions.forEach((q, i) => {
     const userIndex = session.answers[i];
     const isCorrect = userIndex === q.correct_index;
@@ -279,17 +285,14 @@ function renderTranscript(session) {
 
     const wrapper = document.createElement("div");
     wrapper.className = "flex flex-col gap-3";
-    // '$' means "escape" in template literals, so we have to use double $$ to get a literal $ in the output.
     wrapper.innerHTML = `
       <div class="${BOT_BUBBLE}">
         <p class="font-heading font-semibold mb-2">Q${i + 1}. ${q.question}</p>
         <ul class="space-y-1">
           ${q.options
-            // Mark the correct answer in green, and the others in gray. The user's answer is shown below in a separate bubble.
             .map((opt, oi) => {
               let cls = "text-[#6B6765] dark:text-[#8B87A8]";
-              if (oi === q.correct_index) 
-                cls = "text-emerald-600 dark:text-emerald-400 font-medium";
+              if (oi === q.correct_index) cls = "text-emerald-600 dark:text-emerald-400 font-medium";
               return `<li class="${cls}">${opt}</li>`;
             })
             .join("")}
@@ -341,12 +344,10 @@ function handleFile(file) {
 /* ---------------- Quiz generation (real call to the FastAPI backend) ---------------- */
 async function generateQuiz(content, file) {
   const formData = new FormData();
-  if (file) 
-    formData.append("file", file);
-  if (content) 
-    formData.append("content", content);
+  if (file) formData.append("file", file);
+  if (content) formData.append("content", content);
 
-  const res = await fetch(`${API_BASE}/api/quiz`, { method: "POST", body: formData });
+  const res = await fetch("/api/quiz", { method: "POST", body: formData });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -373,10 +374,19 @@ els.generateBtn.addEventListener("click", async () => {
     state.currentIndex = 0;
     state.score = 0;
     state.answers = [];
+    state.historyId = null;
+
+    try {
+      state.historyId = await startHistorySession(quiz.title, quiz.questions.length, quiz.questions);
+    } catch (err) {
+      console.error("Couldn't create history entry for this quiz:", err);
+      // Not fatal — the quiz can still be taken, it just won't be saved to history.
+    }
 
     saveActiveState("quiz");
     showQuiz();
     renderQuestion();
+    renderHistory();
   } catch (err) {
     console.error(err);
     alert(err.message || "Something went wrong generating the quiz.");
@@ -403,7 +413,6 @@ function renderQuestion() {
   els.explanationBox.classList.add("hidden");
   els.nextBtn.classList.add("hidden");
 
-  // Render the options for this question. Move to next question when the user clicks one, and show the explanation.
   q.options.forEach((opt, i) => {
     const div = document.createElement("div");
     div.className = OPTION_BASE_CLASSES;
@@ -452,17 +461,16 @@ function applyAnsweredVisuals(index) {
 }
 
 function selectAnswer(index) {
-  if (state.answered) 
-    return;
+  if (state.answered) return;
   state.answered = true;
   state.answers[state.currentIndex] = index;
 
   const q = state.quiz.questions[state.currentIndex];
-  if (index === q.correct_index) 
-    state.score += 1;
+  if (index === q.correct_index) state.score += 1;
 
   applyAnsweredVisuals(index);
   saveActiveState("quiz");
+  updateHistorySession(false);
 }
 
 els.nextBtn.addEventListener("click", () => {
@@ -487,17 +495,8 @@ function renderScoreDisplay() {
 }
 
 function finishQuiz() {
-  const total = state.quiz.questions.length;
-
-  saveToHistory({
-    title: state.quiz.title,
-    score: state.score,
-    total,
-    questions: state.quiz.questions,
-    answers: state.answers,
-  });
-
   renderScoreDisplay();
+  updateHistorySession(true);
   saveActiveState("score");
   showScore();
 }
@@ -509,6 +508,7 @@ function resetIntake() {
   state.score = 0;
   state.selectedFile = null;
   state.answers = [];
+  state.historyId = null;
   els.notesInput.value = "";
   els.fileInput.value = "";
   els.fileChosen.textContent = "";
@@ -528,6 +528,7 @@ if (restored && restored.quiz) {
   state.currentIndex = restored.currentIndex;
   state.score = restored.score;
   state.answers = restored.answers;
+  state.historyId = restored.historyId;
 
   if (restored.phase === "score") {
     renderScoreDisplay();
