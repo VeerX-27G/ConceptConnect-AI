@@ -266,12 +266,47 @@ const USER_BUBBLE =
 async function viewSession(id) {
   try {
     const session = await fetchSession(id);
+
+    if (!session.completed) {
+      resumeSession(session);
+      return;
+    }
+
     renderTranscript(session);
     showTranscript();
   } catch (err) {
     console.error(err);
     alert("Couldn't load that quiz.");
   }
+}
+
+/* An unfinished quiz reopens as a live quiz (not a read-only transcript):
+   questions you already answered stay marked, everything else is untouched
+   until you click an option. Progress keeps saving to the same DB row. */
+function resumeSession(session) {
+  const total = session.questions.length;
+  const answers = Array.from({ length: total }, (_, i) => session.answers[i] ?? null);
+
+  // Recompute from the answers rather than trusting the stored score.
+  const score = answers.reduce(
+    (sum, a, i) => sum + (a !== null && a === session.questions[i].correct_index ? 1 : 0),
+    0
+  );
+
+  // Land on the first unanswered question (or the last one if all are answered
+  // but the quiz was never finished, so "See results" is still available).
+  const firstUnanswered = answers.findIndex((a) => a === null);
+
+  state.quiz = { title: session.title, questions: session.questions };
+  state.answers = answers;
+  state.score = score;
+  state.currentIndex = firstUnanswered === -1 ? total - 1 : firstUnanswered;
+  state.historyId = session.id;
+  state.selectedFile = null;
+
+  saveActiveState("quiz");
+  showQuiz();
+  renderQuestion();
 }
 
 function renderTranscript(session) {
