@@ -68,13 +68,9 @@ In the project root (next to `main.py`), create a file named `.env`:
 
 ```
 OPENAI_API_KEY=your-api-key-here
-OPENAI_MODEL=your-model-name-here
 ```
 
-> `OPENAI_MODEL` isn't required to be secret — it's just kept alongside the
-> key so you can swap models without editing code. If omitted, a default is
-> used from `quiz_engine.py`. The model must support **image input** (vision),
-> since it's also used to read text out of uploaded images and scanned PDFs.
+A default is used from `quiz_engine.py`. The model must support **image input** (vision), since it's also used to read text out of uploaded images and scanned PDFs.
 
 ### 3. Run it
 
